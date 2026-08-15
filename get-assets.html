@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download assets — Anas El Aadil</title>
+<style>
+  :root { --ink:#000; --muted:#767676; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 30px 80px; background: #fff; color: var(--ink);
+    font-family: "Aktiv Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 16px; letter-spacing: -0.03em;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 37px; font-weight: 400; line-height: 1; letter-spacing: -0.03em; margin: 0 0 24px; }
+  p { line-height: 1.4; margin: 0 0 16px; max-width: 620px; }
+  .muted { color: var(--muted); }
+  hr { border: 0; border-top: 1px solid var(--ink); margin: 32px 0; }
+  h2 {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.03em;
+    color: var(--muted); margin: 32px 0 12px; text-transform: uppercase;
+  }
+  button {
+    appearance: none; border: 0; background: none; padding: 0; cursor: pointer;
+    font-family: inherit; font-size: 24px; letter-spacing: -0.05em; color: var(--ink);
+    text-decoration: underline; text-underline-position: from-font;
+  }
+  button:hover { color: var(--muted); }
+  button:disabled { color: var(--muted); cursor: default; text-decoration: none; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 7px 0; border-bottom: 1px solid #e6e6e6;
+  }
+  li a { color: var(--ink); }
+  li .name { flex: 1; }
+  li .state { font-size: 14px; color: var(--muted); }
+  .ok { color: #000; }
+  .fail { color: #b00; }
+  #status { margin-top: 24px; font-size: 20px; letter-spacing: -0.05em; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Download the site assets</h1>
+
+  <p>Your browser can reach Figma even though the build environment can't. Press
+  the button and 25 files will download to wherever your browser puts downloads.
+  Move them all into the <strong>assets/</strong> folder next to
+  <code>index.html</code>.</p>
+
+  <p class="muted">If your browser asks permission to download multiple files,
+  allow it. If the automatic download is blocked, every filename below is also a
+  direct link — right-click and Save As, using exactly the name shown.</p>
+
+  <p class="muted"><strong>These links expire around 22 August 2026.</strong>
+  After that, export the layers from Figma by hand using these same filenames.</p>
+
+  <hr>
+
+  <button id="go">Download all 25 files &rarr;</button>
+  <p id="status"></p>
+
+  <div id="list"></div>
+
+</div>
+
+<script>
+const B = "https://www.figma.com/api/mcp/asset";
+
+const GROUPS = [
+  ["Shared", [
+    ["023cdf7d-15bf-4ce0-b537-4bd3975d1be2.svg", "logo-aea.svg"],
+    ["c1729b09-9d6a-4bb0-b242-9966b70bd6fb.svg", "wordmark.svg"],
+    ["b0e37453-c419-48bf-a289-a193d749c021.svg", "nav-wordmark.svg"],
+    ["a60e0983-840d-42e0-934d-b40b1ed2c9d0.svg", "nav-monogram.svg"]
+  ]],
+  ["Home page", [
+    ["a177b6f5-4f6e-45f5-b331-ccaac2bfcd6e.png", "hero.png"],
+    ["550d23c5-72f8-42e2-a380-2058d72221c6.png", "imarchi-1.png"],
+    ["13061100-2c2f-42e2-ab0a-46be5ae36e29.png", "imarchi-2.png"],
+    ["3add0c55-608c-4657-be1b-6d79b0bc3a90.png", "imarchi-3.png"],
+    ["cbc0ca0b-6fe8-47d2-b616-72a27fbbf52f.png", "solen-voss-1.png"],
+    ["c76f4afe-d11f-41e9-8a5a-a1f5a9101898.png", "solen-voss-2.png"],
+    ["2f5deeaa-c0fc-428f-894a-0bd62bb4daac.png", "solen-voss-3.png"]
+  ]],
+  ["Project page", [
+    ["fe57b705-d9e7-4775-b580-142034b66738.svg", "masthead-aea.svg"],
+    ["595df8e7-9b50-4c70-8733-f1bd44da8787.png", "sv-1.png"],
+    ["71a8e6b1-38fd-49a7-9e21-65f4fa046c50.png", "sv-2.png"],
+    ["93bcea8a-e43e-45b9-a3e9-3d3487e7af48.png", "sv-3.png"],
+    ["6f6770bd-e660-4b80-baaa-1e7341b6b08d.png", "sv-4.png"],
+    ["913e7847-4f4f-4986-9dbe-4bcbe522aaa5.png", "sv-5.png"],
+    ["4f605bc8-37c0-4355-b2e2-fedd07345bc9.png", "sv-6.png"],
+    ["10f2dee1-3253-4a6c-9fec-2e008663f69f.png", "sv-7.png"],
+    ["acc8bba4-2534-4845-b835-16368ff18563.png", "other-range-crazy.png"],
+    ["17f1be11-4e80-4708-8357-ea9c67ac58d7.png", "other-madame-fc.png"],
+    ["1ec7ea3a-1072-4714-9d75-d80f18e91dd7.png", "other-veloce.png"]
+  ]],
+  ["About page", [
+    ["dd458f05-d31c-4f84-ab6f-1a0a049f53dc.svg", "about-masthead.svg"],
+    ["994a0c35-5a42-4257-ab0f-2dbd5f771ee8.png", "about-portrait.png"],
+    ["3aea1ba3-b904-4e6e-9955-1d5fbd6ab2fe.svg", "awards.svg"]
+  ]]
+];
+
+const listEl = document.getElementById("list");
+const statusEl = document.getElementById("status");
+const rows = {};
+
+GROUPS.forEach(([title, items]) => {
+  const h = document.createElement("h2");
+  h.textContent = title;
+  listEl.appendChild(h);
+
+  const ul = document.createElement("ul");
+  items.forEach(([id, name]) => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = B + "/" + id;
+    a.textContent = name;
+    a.target = "_blank";
+    a.rel = "noopener";
+    const span = document.createElement("span");
+    span.className = "name";
+    span.appendChild(a);
+    const state = document.createElement("span");
+    state.className = "state";
+    li.append(span, state);
+    ul.appendChild(li);
+    rows[name] = state;
+  });
+  listEl.appendChild(ul);
+});
+
+function save(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+document.getElementById("go").addEventListener("click", async function () {
+  this.disabled = true;
+  const all = GROUPS.flatMap(g => g[1]);
+  let done = 0, failed = 0;
+
+  for (const [id, name] of all) {
+    rows[name].textContent = "…";
+    try {
+      const res = await fetch(B + "/" + id);
+      if (!res.ok) throw new Error(res.status);
+      save(await res.blob(), name);
+      rows[name].textContent = "saved";
+      rows[name].className = "state ok";
+      done++;
+    } catch (e) {
+      rows[name].textContent = "failed";
+      rows[name].className = "state fail";
+      failed++;
+    }
+    statusEl.textContent = `${done} saved, ${failed} failed, ${all.length - done - failed} to go…`;
+    await new Promise(r => setTimeout(r, 120));
+  }
+
+  statusEl.textContent = failed === 0
+    ? `All ${done} files saved. Move them into the assets/ folder.`
+    : `${done} saved, ${failed} failed — use the direct links below for those.`;
+  this.disabled = false;
+});
+</script>
+</body>
+</html>

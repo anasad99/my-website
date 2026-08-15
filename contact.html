@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — Anas El Aadil</title>
+<meta name="description" content="Get in touch with Anas El Aadil, a multidisciplinary graphic designer based in Tangier.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="nav__bar">
+    <div class="nav__brand">
+      <a href="index.html" class="nav__logo-link" aria-label="Anas El Aadil — home">
+        <img class="nav__logo nav__logo--wordmark" src="assets/nav-wordmark.svg" alt="" width="1208" height="154">
+        <img class="nav__logo nav__logo--monogram" src="assets/nav-monogram.svg" alt="" width="70" height="20">
+      </a>
+    </div>
+    <div class="nav__links">
+      <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav__list" id="nav-menu">
+        <li><a href="index.html#work">Work</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html" aria-current="page">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="masthead section">
+  <img src="assets/masthead-aea.svg" alt="A.E.A" width="324" height="96">
+</div>
+
+<main id="main">
+
+  <section class="contact-head section">
+    <h1 class="contact-head__title">Get in touch</h1>
+    <p class="contact-head__lead">Tell me about the project &mdash; what you&rsquo;re making, who it&rsquo;s for, and roughly when you need it. A rough brief is enough to start from.</p>
+  </section>
+
+  <section class="contact-body section">
+    <hr class="rule">
+
+    <div class="contact-grid">
+
+      <!-- ------------------------------------------------------------------
+           FORM
+           No endpoint is set, so this falls back to opening a prefilled email.
+           To post it somewhere instead, put the URL in data-endpoint below.
+           See README.md for options.
+      ------------------------------------------------------------------- -->
+      <form class="contact-form" id="contact-form" data-endpoint="" data-mailto="anasadacc@gmail.com" novalidate>
+
+        <div class="field">
+          <label class="field__label" for="name">Name</label>
+          <input class="field__control" type="text" id="name" name="name" autocomplete="name" required>
+          <p class="field__error" id="name-error" hidden>Please enter your name.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="email">Email</label>
+          <input class="field__control" type="email" id="email" name="email" autocomplete="email" required>
+          <p class="field__error" id="email-error" hidden>Please enter a valid email address.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="message">Message</label>
+          <textarea class="field__control field__control--area" id="message" name="message" rows="6" required></textarea>
+          <p class="field__error" id="message-error" hidden>Please write a short message.</p>
+        </div>
+
+        <button class="form-submit" type="submit">Send message <span aria-hidden="true">&rarr;</span></button>
+
+        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+      </form>
+
+      <!-- ------------------------------------------------------------------
+           DETAILS
+      ------------------------------------------------------------------- -->
+      <div class="contact-details">
+
+        <div class="info">
+          <h2 class="info__heading">CONTACT</h2>
+          <ul class="info__list">
+            <li><a href="tel:+212627952997">+212 627952997</a></li>
+            <li><a href="mailto:anasadacc@gmail.com">anasadacc@gmail.com</a></li>
+          </ul>
+        </div>
+
+        <div class="info">
+          <h2 class="info__heading">STUDIO</h2>
+          <ul class="info__list">
+            <li>Tangier, Morocco</li>
+            <li>Working with clients globally</li>
+          </ul>
+        </div>
+
+        <div class="info">
+          <h2 class="info__heading">SOCIAL</h2>
+          <ul class="info__list">
+            <li><a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="https://www.behance.net/" target="_blank" rel="noopener">Behance</a></li>
+            <li><a href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <hr class="rule">
+  </section>
+
+</main>
+
+<footer class="footer section">
+  <div class="footer__content">
+    <div class="footer__logo">
+      <img src="assets/logo-aea.svg" alt="A.E.A" width="1156" height="343">
+    </div>
+    <div class="footer__text">
+      <div class="footer__col">
+        <h2 class="footer__heading">CONTACT</h2>
+        <ul class="footer__list">
+          <li><a href="tel:+212627952997">+212 627952997</a></li>
+          <li><a href="mailto:anasadacc@gmail.com">anasadacc@gmail.com</a></li>
+        </ul>
+      </div>
+      <div class="footer__col footer__col--social">
+        <h2 class="footer__heading">SOCIAL</h2>
+        <ul class="footer__list">
+          <li><a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://www.behance.net/" target="_blank" rel="noopener">Behance</a></li>
+          <li><a href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer__wordmark">
+    <img src="assets/wordmark.svg" alt="Anas El Aadil" width="1248" height="159">
+  </div>
+</footer>
+
+<script src="nav.js"></script>
+<script src="contact.js"></script>
+</body>
+</html>
