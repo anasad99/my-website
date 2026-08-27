@@ -1,0 +1,69 @@
+[
+  {
+    "slug": "imarchi",
+    "name": "IMarchi",
+    "discipline": "ARCHITECTURE ET DESIGN",
+    "services": [
+      "Brand Identity",
+      "Typography",
+      "Art Direction"
+    ],
+    "lead": "Our identity for IMARCHI focused on a clean geometric system and a precise visual hierarchy. Through a monogram merging I, M and A and a deep earthy green palette, we conveyed stability, innovation and a rooted connection to Morocco.",
+    "images": [
+      {
+        "src": "assets/imarchi-1.png",
+        "alt": "IMARCHI logotype applied to a planted building facade"
+      },
+      {
+        "src": "assets/imarchi-2.png",
+        "alt": "IMARCHI business cards and monogram on a dark surface"
+      },
+      {
+        "src": "assets/imarchi-3.png",
+        "alt": "Framed IMARCHI print piece on a window ledge"
+      }
+    ]
+  },
+  {
+    "slug": "solen-voss",
+    "name": "Solen Voss",
+    "discipline": "Brand Identity & Art Direction",
+    "services": [
+      "Brand Identity & Logo",
+      "Typography",
+      "Art Direction",
+      "Packaging"
+    ],
+    "lead": "Can a mark stay silent and still command a room? Solen Voss came to us wanting an identity that never announces itself, one that earns attention the way his work does. See how we built a system of restrained typography, hand-led art direction, and deliberate space to make quiet feel like authority.",
+    "images": [
+      {
+        "src": "assets/sv-1.png",
+        "alt": "Solen Voss wordmark in white over a warm interior"
+      },
+      {
+        "src": "assets/sv-2.png",
+        "alt": "Solen Voss logotype lockups on deep navy"
+      },
+      {
+        "src": "assets/sv-3.png",
+        "alt": "Signature variations drawn in fine line work"
+      },
+      {
+        "src": "assets/sv-4.png",
+        "alt": "Wax seal stamped with the SV monogram on an envelope"
+      },
+      {
+        "src": "assets/sv-5.png",
+        "alt": "Business cards and stationery on a pale surface"
+      },
+      {
+        "src": "assets/sv-6.png",
+        "alt": "Embossed SV monogram on a dark navy box"
+      },
+      {
+        "src": "assets/sv-7.png",
+        "alt": "Solen Voss signage applied to a shopfront"
+      }
+    ]
+  }
+]

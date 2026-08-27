@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin login — Anas El Aadil</title>
+<link rel="icon" href="/assets/A.png">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .login {
+    width: 100%;
+    max-width: 340px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 400;
+    margin: 0 0 24px;
+    letter-spacing: -0.03em;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #767676;
+    margin-bottom: 6px;
+  }
+  .field { margin-bottom: 18px; }
+  input {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #000;
+    font-size: 16px;
+    font-family: inherit;
+    background: transparent;
+  }
+  input:focus { outline: none; border-bottom-width: 2px; }
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button:hover { opacity: 0.85; }
+  .error {
+    background: #fdecea;
+    color: #b3261e;
+    font-size: 14px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="login">
+    <h1>Admin login</h1>
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+    <form method="post" action="/admin/login">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Sign in</button>
+    </form>
+  </div>
+</body>
+</html>

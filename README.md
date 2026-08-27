@@ -1,26 +1,54 @@
 # Anas El Aadil — portfolio
 
-Three static pages, one shared stylesheet.
+A Node/Express site: `about.html` and `contact.html` are served as static
+files, while the home page and each case-study page are rendered from
+`data/projects.json` through EJS templates. Works are managed through a small
+admin dashboard rather than by hand-editing HTML.
 
-| File | Figma nodes (desktop / tablet / mobile) |
-|---|---|
-| `index.html` | `363:631` · `363:672` · `363:713` |
-| `project.html` | `363:431` · `363:497` · `363:563` |
-| `about.html` | `363:106` · `363:147` · `363:188` |
-| `contact.html` | no Figma frame — see below |
+| Page | Figma nodes (desktop / tablet / mobile) | Source |
+|---|---|---|
+| Home (`/`) | `363:631` · `363:672` · `363:713` | `views/index.ejs` |
+| Case study (`/project/:slug`) | `363:431` · `363:497` · `363:563` | `views/project.ejs` |
+| `about.html` | `363:106` · `363:147` · `363:188` | static |
+| `contact.html` | no Figma frame — see below | static |
 
-`styles.css` and `nav.js` are shared by all four. `contact.js` is used only by
-the contact page.
+`styles.css` and `nav.js` are shared by every page. `contact.js` is used only
+by the contact page.
 
 ## Setup
 
 ```bash
 bash download-assets.sh   # 25 files into ./assets
-open index.html
+npm install
+cp .env.example .env      # then set ADMIN_USERNAME / ADMIN_PASSWORD / SESSION_SECRET
+npm start                 # http://localhost:3000
 ```
 
-**No terminal?** Open `get-assets.html` in any browser and press the button —
-it downloads the same 25 files. Move them into `assets/`.
+Use `npm run dev` instead of `npm start` to auto-restart on file changes.
+
+**No terminal for the asset download?** Open `get-assets.html` in any browser
+and press the button — it downloads the same 25 files. Move them into
+`assets/`.
+
+## Managing works
+
+Projects live in `data/projects.json`, not in the HTML. To add, edit, or
+remove one:
+
+1. Go to `/admin/login` and sign in with the credentials from `.env`.
+2. **Add a work** — fill in name, discipline, comma-separated services, the
+   case-study text, and upload one or more images. The first image becomes
+   the homepage/Other-Projects thumbnail; the rest fill out the case-study
+   gallery (auto-arranged: wide, pair, wide, pair, …).
+3. **Delete a work** from the same dashboard — this removes its entry from
+   `data/projects.json` and its uploaded images under `assets/works/<slug>/`.
+
+The home page's "Our work" section and every case-study page (including its
+"Other Projects" list) are generated from this data on each request, so a new
+work shows up everywhere immediately — no HTML editing required.
+
+Uploaded images are written to `assets/works/<slug>/`; the original seed
+images (`sv-*.png`, `imarchi-*.png`, etc.) stay in `assets/`.
 
 ## Assets
 
@@ -76,20 +104,22 @@ keep every page identical.
 
 ### Wiring up the form
 
-Out of the box the form validates in the browser and then opens the visitor's
-email client with the message prefilled. That works with no server, but it's a
-fallback, not a real submission — some visitors have no mail client configured.
+The form posts to the server's own `/contact` route (`data-endpoint="/contact"`
+in `contact.html`) — no third-party form service needed. Every submission is:
 
-To post it properly, pick a service and put its URL in the `data-endpoint`
-attribute on the `<form>` in `contact.html`:
+1. Saved to `data/messages.json` and shown under **Messages** on `/admin`
+   (readable, deletable — no SMTP required for this part).
+2. Emailed to you, if SMTP is configured in `.env`
+   (`SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` / `CONTACT_TO_EMAIL`, see
+   `.env.example`). For Gmail, `SMTP_USER` is your address and `SMTP_PASS`
+   must be an [App Password](https://myaccount.google.com/apppasswords), not
+   your normal login password.
 
-- **Formspree** — sign up, create a form, use `https://formspree.io/f/xxxxxxx`
-- **Web3Forms** — free, no account; add your access key as a hidden input
-- **Netlify Forms** — if you host on Netlify, add `netlify` to the `<form>` tag
-  instead and it's handled for you
-
-`contact.js` already posts a `FormData` object and handles success and failure
-states, so any of these works without further changes.
+Without SMTP set, the form still works end-to-end — submissions just show up
+only in `/admin`, not your inbox, and the dashboard displays a reminder that
+email isn't configured. If `contact.js` can't reach the server at all (e.g.
+opened as a local file instead of through `npm start`), it falls back to
+opening the visitor's email client with the message prefilled.
 
 ## Decisions worth knowing
 
@@ -123,12 +153,15 @@ platform home pages — swap in the real profiles.
 while the project write-ups say "we built". I used first person on the contact
 page to match About. Worth settling on one across the site.
 
-**Other Projects cards** all link to `#`. Range Crazy, Madame FC and Véloce need
-their own pages, or point them at `project.html` for now.
+**Other Projects cards** now come from `data/projects.json` — every real work
+added through `/admin` gets its own case-study page automatically. The old
+Range Crazy / Madame FC / Véloce placeholders (no real content behind them)
+were dropped rather than wired to fake pages.
 
 ## Structure notes
 
-The nav and footer markup is duplicated across the four files — normal for
-static HTML, but it means a nav change is a three-file edit. If this grows past
-a handful of pages, an include step (Eleventy, Astro, or even a small build
-script) would earn its keep.
+The home page and case-study page share `views/partials/nav.ejs` and
+`views/partials/footer.ejs`, so a nav change there is a one-file edit.
+`about.html` and `contact.html` are still static, so the same markup is
+duplicated in those two — if the site grows past these four pages, converting
+them to EJS too (or introducing a full include step) would earn its keep.

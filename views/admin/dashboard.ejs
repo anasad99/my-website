@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<link rel="icon" href="/assets/A.png">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #000;
+    margin: 0;
+    padding: 24px 20px 60px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  h1 { font-size: 24px; font-weight: 400; margin: 0; letter-spacing: -0.03em; }
+  h2 { font-size: 18px; font-weight: 400; margin: 0 0 16px; }
+  .logout-form button {
+    background: none;
+    border: 1px solid #000;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .logout-form button:hover { background: #000; color: #fff; }
+
+  .works {
+    list-style: none;
+    margin: 0 0 48px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .work-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 14px;
+  }
+  .work-row img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .work-row__info { flex: 1; min-width: 0; }
+  .work-row__name { font-size: 15px; }
+  .work-row__meta { font-size: 13px; color: #767676; }
+  .work-row a { color: inherit; }
+  .work-row form { margin: 0; }
+  .delete-btn {
+    background: none;
+    border: 1px solid #b3261e;
+    color: #b3261e;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .delete-btn:hover { background: #b3261e; color: #fff; }
+  .empty { color: #767676; font-size: 14px; }
+
+  .section { margin-bottom: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .notice {
+    background: #fff8e1;
+    color: #6b5900;
+    font-size: 13px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .messages {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .message-row {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 14px;
+  }
+  .message-row__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .message-row__from { font-size: 15px; }
+  .message-row__from a { color: inherit; }
+  .message-row__date { font-size: 12px; color: #767676; white-space: nowrap; }
+  .message-row__text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 10px;
+    white-space: pre-wrap;
+  }
+
+  form.add-form {
+    border-top: 1px solid #000;
+    padding-top: 24px;
+  }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #767676; margin-bottom: 6px; }
+  input[type="text"], textarea, input[type="file"] {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #000;
+    font-size: 15px;
+    font-family: inherit;
+    background: transparent;
+    resize: vertical;
+  }
+  textarea { min-height: 90px; }
+  input:focus, textarea:focus { outline: none; border-bottom-width: 2px; }
+  .hint { font-size: 12px; color: #767676; margin-top: 4px; }
+  button[type="submit"] {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button[type="submit"]:hover { opacity: 0.85; }
+  .error {
+    background: #fdecea;
+    color: #b3261e;
+    font-size: 14px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Admin</h1>
+      <form class="logout-form" method="post" action="/admin/logout">
+        <button type="submit">Log out</button>
+      </form>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Messages<%= messages.length ? ' (' + messages.length + ')' : '' %></h2>
+      </div>
+
+      <% if (!mailConfigured) { %>
+        <p class="notice">Email notifications aren't configured — messages are only saved here. Set SMTP_HOST / SMTP_USER / SMTP_PASS in .env to also get them by email.</p>
+      <% } %>
+
+      <ul class="messages">
+        <% if (!messages.length) { %>
+          <li class="empty">No messages yet.</li>
+        <% } %>
+        <% messages.forEach(function (msg) { %>
+          <li class="message-row">
+            <div class="message-row__head">
+              <span class="message-row__from"><%= msg.name %> — <a href="mailto:<%= msg.email %>"><%= msg.email %></a></span>
+              <span class="message-row__date"><%= new Date(msg.receivedAt).toLocaleString() %></span>
+            </div>
+            <p class="message-row__text"><%= msg.message %></p>
+            <form method="post" action="/admin/messages/<%= msg.id %>/delete" onsubmit="return confirm('Delete this message?');">
+              <button type="submit" class="delete-btn">Delete</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Works</h2>
+      </div>
+
+      <ul class="works">
+        <% if (!projects.length) { %>
+          <li class="empty">No works yet — add one below.</li>
+        <% } %>
+        <% projects.forEach(function (project) { %>
+          <li class="work-row">
+            <img src="/<%= project.images[0].src %>" alt="">
+            <div class="work-row__info">
+              <div class="work-row__name"><a href="/project/<%= project.slug %>" target="_blank"><%= project.name %></a></div>
+              <div class="work-row__meta"><%= project.discipline %> · <%= project.images.length %> image<%= project.images.length === 1 ? '' : 's' %></div>
+            </div>
+            <form method="post" action="/admin/works/<%= project.slug %>/delete" onsubmit="return confirm('Delete &quot;<%= project.name %>&quot;? This removes its images too.');">
+              <button type="submit" class="delete-btn">Delete</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+
+      <h2>Add a work</h2>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <form class="add-form" method="post" action="/admin/works" enctype="multipart/form-data">
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="discipline">Discipline</label>
+          <input type="text" id="discipline" name="discipline" placeholder="e.g. Brand Identity &amp; Art Direction" required>
+        </div>
+        <div class="field">
+          <label for="services">Services</label>
+          <input type="text" id="services" name="services" placeholder="Comma-separated, e.g. Logo, Typography, Packaging">
+        </div>
+        <div class="field">
+          <label for="lead">Case study text</label>
+          <textarea id="lead" name="lead" required></textarea>
+        </div>
+        <div class="field">
+          <label for="images">Images</label>
+          <input type="file" id="images" name="images" accept="image/*" multiple required>
+          <p class="hint">First image is used on the homepage and Other Projects cards. Up to 12 images.</p>
+        </div>
+        <button type="submit">Add work</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

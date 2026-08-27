@@ -1,0 +1,18 @@
+<header class="nav" id="nav">
+  <div class="nav__bar">
+    <div class="nav__brand">
+      <a href="/" class="nav__logo-link" aria-label="Anas El Aadil — home">
+        <img class="nav__logo nav__logo--wordmark" src="/assets/nav-wordmark.svg" alt="" width="1208" height="154">
+        <img class="nav__logo nav__logo--monogram" src="/assets/nav-monogram.svg" alt="" width="70" height="20">
+      </a>
+    </div>
+    <div class="nav__links">
+      <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
+      <ul class="nav__list" id="nav-menu">
+        <li><a href="/#work"<%= active === 'work' ? ' aria-current="page"' : '' %>>Work</a></li>
+        <li><a href="/about"<%= active === 'about' ? ' aria-current="page"' : '' %>>About</a></li>
+        <li><a href="/contact"<%= active === 'contact' ? ' aria-current="page"' : '' %>>Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
