@@ -3,3 +3,4 @@ __MACOSX/
 Thumbs.db
 node_modules/
 .env
+data/messages.json

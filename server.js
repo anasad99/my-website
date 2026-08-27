@@ -10,6 +10,7 @@ const multer = require('multer');
 const projects = require('./lib/projects');
 const messages = require('./lib/messages');
 const mailer = require('./lib/mailer');
+const { WORKS_DIR } = require('./lib/storage-paths');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -160,7 +161,7 @@ app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), (req, r
   }
 
   const slug = projects.uniqueSlug(name, projects.readAll());
-  const dir = path.join(__dirname, 'assets', 'works', slug);
+  const dir = path.join(WORKS_DIR, slug);
   fs.mkdirSync(dir, { recursive: true });
 
   const images = req.files.map((file, i) => {
@@ -177,7 +178,7 @@ app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), (req, r
 app.post('/admin/works/:slug/delete', requireAdmin, (req, res) => {
   const removed = projects.remove(req.params.slug);
   if (removed) {
-    fs.rm(path.join(__dirname, 'assets', 'works', req.params.slug), { recursive: true, force: true }, () => {});
+    fs.rm(path.join(WORKS_DIR, req.params.slug), { recursive: true, force: true }, () => {});
   }
   res.redirect('/admin');
 });
@@ -193,15 +194,24 @@ app.post('/admin/messages/:id/delete', requireAdmin, (req, res) => {
 
 // ---------------------------------------------------------------------------
 // Static assets (styles.css, nav.js, contact.js, assets/*) referenced by
-// absolute/relative paths in the pages above.
+// absolute/relative paths in the pages above. Admin-uploaded work images live
+// in WORKS_DIR, which is outside the repo on Vercel (see lib/storage-paths),
+// so they need their own static handler ahead of the general one.
 // ---------------------------------------------------------------------------
 
+app.use('/assets/works', express.static(WORKS_DIR));
 app.use(express.static(__dirname, { index: false }));
 
 app.use((req, res) => {
   res.status(404).render('index', { projects: projects.readAll() });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// Vercel imports this file as a serverless function and calls the exported
+// app directly — it must not also start its own listener.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
