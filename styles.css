@@ -220,14 +220,12 @@ button:focus-visible,
 
 /* Horizontal image strip.
    In Figma the third image is clipped by the frame edge; on the web that
-   becomes a scrollable strip so the clipped images stay reachable. */
+   becomes a looping marquee so the clipped image stays visible without
+   requiring a manual scroll. The track renders each project's images twice
+   (see index.ejs) so translateX(-50%) loops seamlessly back to the start. */
 .strip {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-right: 20px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  overflow: hidden;
+  scrollbar-width: none;
 }
 
 .strip__track {
@@ -235,6 +233,17 @@ button:focus-visible,
   align-items: center;
   gap: var(--strip-gap);
   width: max-content;
+  animation: strip-marquee 24s linear infinite;
+}
+
+.strip:hover .strip__track,
+.strip:focus-within .strip__track {
+  animation-play-state: paused;
+}
+
+@keyframes strip-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .strip__track img {
@@ -242,7 +251,6 @@ button:focus-visible,
   height: auto;
   aspect-ratio: 461.25 / 446;
   object-fit: cover;
-  scroll-snap-align: start;
 }
 
 .project__meta {
@@ -442,7 +450,19 @@ button:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .strip { scroll-behavior: auto; }
+
+  .strip {
+    scroll-behavior: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .strip__track {
+    animation: none;
+    transform: none;
+  }
+
+  .strip__track img { scroll-snap-align: start; }
 }
 
 

@@ -35,8 +35,12 @@
     <article class="project inset">
       <div class="strip" tabindex="0" role="group" aria-label="<%= project.name %> project images">
         <ul class="strip__track">
-          <% project.images.slice(0, 3).forEach(function (image) { %>
+          <% var stripImages = project.images.slice(0, 3); %>
+          <% stripImages.forEach(function (image) { %>
           <li><img src="/<%= image.src %>" alt="<%= image.alt %>" width="461" height="446"></li>
+          <% }) %>
+          <% stripImages.forEach(function (image) { %>
+          <li aria-hidden="true"><img src="/<%= image.src %>" alt="" width="461" height="446"></li>
           <% }) %>
         </ul>
       </div>
