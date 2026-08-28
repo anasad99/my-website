@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const multer = require('multer');
 
 const projects = require('./lib/projects');
@@ -23,17 +23,22 @@ if (!process.env.ADMIN_PASSWORD) {
   console.warn('ADMIN_PASSWORD is not set — using the default "admin". Set it in .env before deploying.');
 }
 if (!process.env.SESSION_SECRET) {
-  console.warn('SESSION_SECRET is not set — using a random value generated at startup (admin sessions reset on restart).');
+  console.warn('SESSION_SECRET is not set — using a random value generated at startup. On a serverless host (Vercel) this WILL break admin login: each instance gets its own random secret, so a login cookie signed by one instance fails verification on the next. Set SESSION_SECRET as a fixed environment variable before deploying there.');
 }
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 8 }
+// Session data lives in the signed cookie itself (not server memory), so it
+// works across Vercel's separate serverless instances — a server-side store
+// like express-session's default MemoryStore does not, since a login and
+// the next request can land on different instances with no shared memory.
+app.use(cookieSession({
+  name: 'session',
+  keys: [SESSION_SECRET],
+  maxAge: 1000 * 60 * 60 * 8,
+  httpOnly: true,
+  sameSite: 'lax'
 }));
 
 app.use(express.urlencoded({ extended: false }));
@@ -126,7 +131,8 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.post('/admin/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/admin/login'));
+  req.session = null;
+  res.redirect('/admin/login');
 });
 
 // ---------------------------------------------------------------------------
