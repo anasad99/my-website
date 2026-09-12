@@ -58,7 +58,19 @@
   .work-row__meta { font-size: 13px; color: #767676; }
   .work-row a { color: inherit; }
   .work-row form { margin: 0; }
+  .edit-btn {
+    display: inline-block;
+    background: none;
+    border: 1px solid #000;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .edit-btn:hover { background: #000; color: #fff; }
   .delete-btn {
+    flex-shrink: 0;
     background: none;
     border: 1px solid #b3261e;
     color: #b3261e;
@@ -203,6 +215,7 @@
               <div class="work-row__name"><a href="/project/<%= project.slug %>" target="_blank"><%= project.name %></a></div>
               <div class="work-row__meta"><%= project.discipline %> · <%= project.images.length %> image<%= project.images.length === 1 ? '' : 's' %></div>
             </div>
+            <a class="edit-btn" href="/admin/works/<%= project.slug %>/edit">Edit</a>
             <form method="post" action="/admin/works/<%= project.slug %>/delete" onsubmit="return confirm('Delete &quot;<%= project.name %>&quot;? This removes its images too.');">
               <button type="submit" class="delete-btn">Delete</button>
             </form>
@@ -214,7 +227,7 @@
       <% if (error) { %>
         <p class="error"><%= error %></p>
       <% } %>
-      <form class="add-form" method="post" action="/admin/works" enctype="multipart/form-data">
+      <form class="add-form work-form" method="post" action="/admin/works" enctype="multipart/form-data">
         <div class="field">
           <label for="name">Name</label>
           <input type="text" id="name" name="name" required>
@@ -228,7 +241,7 @@
           <input type="text" id="services" name="services" placeholder="Comma-separated, e.g. Logo, Typography, Packaging">
         </div>
         <div class="field">
-          <label for="lead">Case study text</label>
+          <label for="lead">Description</label>
           <textarea id="lead" name="lead" required></textarea>
         </div>
         <div class="field">
@@ -240,5 +253,6 @@
       </form>
     </div>
   </div>
+  <script src="/admin-upload.js"></script>
 </body>
 </html>

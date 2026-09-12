@@ -181,6 +181,61 @@ app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), (req, r
   res.redirect('/admin');
 });
 
+app.get('/admin/works/:slug/edit', requireAdmin, (req, res) => {
+  const project = projects.findBySlug(req.params.slug);
+  if (!project) return res.redirect('/admin');
+  res.render('admin/edit', { project, error: null });
+});
+
+app.post('/admin/works/:slug', requireAdmin, uploadImages.array('images', 12), (req, res) => {
+  const project = projects.findBySlug(req.params.slug);
+  if (!project) return res.redirect('/admin');
+
+  const name = (req.body.name || '').trim();
+  const discipline = (req.body.discipline || '').trim();
+  const lead = (req.body.lead || '').trim();
+  const services = (req.body.services || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const removeSrcs = [].concat(req.body.removeImages || []);
+
+  let images = project.images.filter((img) => !removeSrcs.includes(img.src));
+
+  // Only ever delete files we manage ourselves (this work's own upload
+  // folder) — never an original seed image living directly under assets/.
+  removeSrcs.forEach((src) => {
+    if (src.startsWith(`assets/works/${project.slug}/`)) {
+      fs.unlink(path.join(__dirname, src), () => {});
+    }
+  });
+
+  if (req.files && req.files.length) {
+    const dir = path.join(WORKS_DIR, project.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const usedNumbers = images
+      .map((img) => parseInt(path.basename(img.src), 10))
+      .filter((n) => !isNaN(n));
+    let next = usedNumbers.length ? Math.max(...usedNumbers) + 1 : 1;
+    req.files.forEach((file) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      const filename = `${next++}${ext}`;
+      fs.writeFileSync(path.join(dir, filename), file.buffer);
+      images.push({ src: `assets/works/${project.slug}/${filename}`, alt: `${name || project.name} project image` });
+    });
+  }
+
+  if (!name || !discipline || !lead || images.length === 0) {
+    return res.status(400).render('admin/edit', {
+      project: { ...project, name, discipline, lead, services, images },
+      error: 'Name, discipline, description and at least one image are required.'
+    });
+  }
+
+  projects.update(project.slug, { name, discipline, lead, services, images });
+  res.redirect('/admin');
+});
+
 app.post('/admin/works/:slug/delete', requireAdmin, (req, res) => {
   const removed = projects.remove(req.params.slug);
   if (removed) {

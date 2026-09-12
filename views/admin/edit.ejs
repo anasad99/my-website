@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit — <%= project.name %></title>
+<link rel="icon" href="/assets/A.png">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #fff;
+    color: #000;
+    margin: 0;
+    padding: 24px 20px 60px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  h1 { font-size: 24px; font-weight: 400; margin: 0; letter-spacing: -0.03em; }
+  .back-link { font-size: 13px; color: #767676; }
+  .back-link:hover { color: #000; }
+
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #767676; margin-bottom: 6px; }
+  input[type="text"], textarea, input[type="file"] {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid #000;
+    font-size: 15px;
+    font-family: inherit;
+    background: transparent;
+    resize: vertical;
+  }
+  textarea { min-height: 90px; }
+  input:focus, textarea:focus { outline: none; border-bottom-width: 2px; }
+  .hint { font-size: 12px; color: #767676; margin-top: 4px; }
+  button[type="submit"] {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button[type="submit"]:hover { opacity: 0.85; }
+  .error {
+    background: #fdecea;
+    color: #b3261e;
+    font-size: 14px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+  }
+
+  .current-images {
+    list-style: none;
+    margin: 0 0 24px;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .current-images li {
+    width: 100px;
+  }
+  .current-images img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .current-images label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #b3261e;
+    margin: 0;
+    cursor: pointer;
+  }
+  .current-images input[type="checkbox"] { margin: 0; width: auto; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Edit work</h1>
+      <a class="back-link" href="/admin">&larr; Back to admin</a>
+    </div>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <form class="edit-form work-form" method="post" action="/admin/works/<%= project.slug %>" enctype="multipart/form-data">
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="<%= project.name %>" required>
+      </div>
+      <div class="field">
+        <label for="discipline">Discipline</label>
+        <input type="text" id="discipline" name="discipline" value="<%= project.discipline %>" required>
+      </div>
+      <div class="field">
+        <label for="services">Services</label>
+        <input type="text" id="services" name="services" value="<%= project.services.join(', ') %>" placeholder="Comma-separated, e.g. Logo, Typography, Packaging">
+      </div>
+      <div class="field">
+        <label for="lead">Description</label>
+        <textarea id="lead" name="lead" required><%= project.lead %></textarea>
+      </div>
+
+      <div class="field">
+        <label>Current images</label>
+        <ul class="current-images">
+          <% project.images.forEach(function (image, i) { %>
+          <li>
+            <img src="/<%= image.src %>" alt="">
+            <label><input type="checkbox" name="removeImages" value="<%= image.src %>"> Remove</label>
+          </li>
+          <% }) %>
+        </ul>
+        <p class="hint">Checked images are removed when you save. The first remaining image (top-left order above) is used on the homepage and Other Projects cards.</p>
+      </div>
+
+      <div class="field">
+        <label for="images">Add more images</label>
+        <input type="file" id="images" name="images" accept="image/*" multiple>
+        <p class="hint">Optional. New images are added after the current ones. Up to 12 per upload.</p>
+      </div>
+
+      <button type="submit">Save changes</button>
+    </form>
+  </div>
+  <script src="/admin-upload.js"></script>
+</body>
+</html>
