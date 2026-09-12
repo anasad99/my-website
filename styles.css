@@ -24,6 +24,11 @@
   --gutter: 15px;
   --nav-h: 46px;
   --strip-gap: 20px;
+  /* The design's own breakpoints top out at "Desktop ≥ 1280px" and every
+     component-level max-width (case-study text, footer columns, etc.) was
+     tuned around that width — beyond it, content stays capped and centred
+     rather than stretching edge to edge on wide monitors. */
+  --max-width: 1280px;
 }
 
 /* --------------------------------------------------------------- Reset -- */
@@ -71,8 +76,16 @@ button:focus-visible,
 
 /* Shared shells ---------------------------------------------------------- */
 
-.section { padding-inline: var(--gutter); }
-.inset   { padding-inline: var(--gutter); }
+.section {
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.inset {
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
 
 .rule {
   width: 100%;
@@ -99,6 +112,8 @@ button:focus-visible,
   top: 0;
   z-index: 50;
   background: var(--bg);
+  max-width: var(--max-width);
+  margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
@@ -384,7 +399,7 @@ button:focus-visible,
   }
 
   .work__label {
-    padding-bottom: 133px;
+    padding-bottom: 50px;
     margin-bottom: 10px;
   }
 
@@ -506,14 +521,6 @@ button:focus-visible,
   gap: 20px;
 }
 
-.case-head__kicker {
-  font-size: var(--fs-section);
-  line-height: 1;
-  letter-spacing: var(--ls-tight);
-  text-decoration: underline;
-  text-underline-position: from-font;
-}
-
 .case-head__name {
   font-size: var(--fs-hero);
   font-weight: 400;
@@ -583,6 +590,13 @@ button:focus-visible,
   gap: 29px;
 }
 
+.others__head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .others__title {
   font-size: var(--fs-hero);
   font-weight: 400;
@@ -590,13 +604,46 @@ button:focus-visible,
   letter-spacing: var(--ls-tight);
 }
 
-.others__grid {
+.others__nav {
   display: flex;
-  flex-direction: column;
-  gap: 30px;
+  flex-shrink: 0;
+  gap: 20px;
 }
 
+.others__arrow {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--fs-section);
+  line-height: 1;
+}
+
+.others__arrow:hover { color: var(--muted); }
+
+/* Horizontally scrolling carousel, snapped to one card at a time. Exactly
+   three cards fit per view from 768px up; below that one card shows with a
+   peek of the next to hint it scrolls. Prev/Next (see others-carousel.js)
+   step by one card and hide themselves at either end of the scroll range. */
+.others__grid {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.others__grid::-webkit-scrollbar { display: none; }
+
 .others__card {
+  flex: 0 0 calc((100% - 15px) / 1.15);
+  min-width: 0;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -604,7 +651,7 @@ button:focus-visible,
 
 .others__card img {
   width: 100%;
-  aspect-ratio: 407.33 / 389.13;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
 }
 
@@ -616,13 +663,9 @@ button:focus-visible,
 
   .others { gap: 104px; }
 
-  .others__grid {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 14px;
-  }
+  .others__grid { gap: 14px; }
 
-  .others__card { flex: 1 1 0; min-width: 0; }
+  .others__card { flex: 0 0 calc((100% - 2 * 14px) / 3); }
 }
 
 @media (min-width: 1280px) {

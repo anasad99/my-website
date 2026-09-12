@@ -13,7 +13,7 @@ const mailer = require('./lib/mailer');
 const { WORKS_DIR } = require('./lib/storage-paths');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3300;
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
@@ -72,7 +72,7 @@ app.get('/project/:slug', (req, res) => {
   const project = projects.findBySlug(req.params.slug);
   if (!project) return res.status(404).render('index', { projects: projects.readAll() });
 
-  const otherProjects = projects.readAll().filter((p) => p.slug !== project.slug).slice(0, 3);
+  const otherProjects = projects.readAll().filter((p) => p.slug !== project.slug);
 
   res.render('project', {
     project,
