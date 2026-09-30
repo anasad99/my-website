@@ -210,7 +210,7 @@
         <% } %>
         <% projects.forEach(function (project) { %>
           <li class="work-row">
-            <img src="/<%= project.images[0].src %>" alt="">
+            <img src="<%= imgSrc(project.images[0].src) %>" alt="">
             <div class="work-row__info">
               <div class="work-row__name"><a href="/project/<%= project.slug %>" target="_blank"><%= project.name %></a></div>
               <div class="work-row__meta"><%= project.discipline %> · <%= project.images.length %> image<%= project.images.length === 1 ? '' : 's' %></div>

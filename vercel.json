@@ -12,6 +12,8 @@
           "styles.css",
           "nav.js",
           "contact.js",
+          "others-carousel.js",
+          "admin-upload.js",
           "about.html",
           "contact.html"
         ]

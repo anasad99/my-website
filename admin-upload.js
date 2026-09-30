@@ -2,16 +2,19 @@
   var form = document.querySelector('form.work-form');
   if (!form) return;
 
+  // Sent as a few images per request rather than all at once — a serverless
+  // host (Vercel) rejects any single request over ~4.5MB before it even
+  // reaches the app, and enough compressed photos together can still cross
+  // that even though each one alone is small.
+  var BATCH_SIZE = 3;
+  var BATCH_SAFE_BYTES = 3.8 * 1024 * 1024;
+
   var fileInput = document.getElementById('images');
   var submitBtn = form.querySelector('button[type="submit"]');
   var status = document.createElement('p');
   status.className = 'hint';
   form.appendChild(status);
 
-  // Vercel (and most serverless hosts) reject requests over ~4.5MB before
-  // they ever reach the app. Photos straight off a phone or camera blow
-  // past that easily, so downscale and re-encode each one in the browser
-  // before upload — this also just makes every deploy target faster.
   function compressImage(file, maxDim, quality) {
     return new Promise(function (resolve, reject) {
       var img = new Image();
@@ -48,6 +51,36 @@
     return blobs.reduce(function (sum, b) { return sum + b.size; }, 0);
   }
 
+  function chunk(arr, size) {
+    var out = [];
+    for (var i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
+  function imagesFormData(blobs) {
+    var fd = new FormData();
+    blobs.forEach(function (blob, i) {
+      fd.append('images', blob, 'image-' + (i + 1) + '.jpg');
+    });
+    return fd;
+  }
+
+  // Throws either an Error with .validationHtml (server re-rendered the page
+  // with a field error — the caller redisplays it) or a plain Error.message.
+  async function postBatch(url, formData) {
+    var res = await fetch(url, { method: 'POST', body: formData });
+    if (res.ok) return res.json();
+
+    var contentType = res.headers.get('content-type') || '';
+    if (contentType.indexOf('application/json') !== -1) {
+      var body = await res.json();
+      throw new Error(body.error || 'Upload failed.');
+    }
+    var err = new Error('validation error');
+    err.validationHtml = await res.text();
+    throw err;
+  }
+
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (!form.reportValidity()) return;
@@ -60,37 +93,48 @@
       if (files.length) {
         status.textContent = 'Compressing ' + files.length + ' image' + (files.length === 1 ? '' : 's') + '…';
         blobs = await compressAll(files, 1800, 0.82);
+      }
 
-        // Safety net for a batch of large/detailed photos: if it's still
-        // too big for a single request, compress harder and try once more.
-        if (totalSize(blobs) > 3.5 * 1024 * 1024) {
-          status.textContent = 'Still large — compressing further…';
-          blobs = await compressAll(files, 1400, 0.6);
+      var fileBatches = chunk(files, BATCH_SIZE);
+      var blobBatches = chunk(blobs, BATCH_SIZE);
+      if (blobBatches.length === 0) blobBatches.push([]);
+
+      // Re-compress harder any individual batch that's still too big to
+      // send safely in one request.
+      for (var b = 0; b < blobBatches.length; b++) {
+        if (totalSize(blobBatches[b]) > BATCH_SAFE_BYTES) {
+          status.textContent = 'Compressing batch ' + (b + 1) + ' further…';
+          blobBatches[b] = await compressAll(fileBatches[b], 1400, 0.6);
         }
       }
 
-      var formData = new FormData(form);
-      formData.delete('images');
-      blobs.forEach(function (blob, i) {
-        formData.append('images', blob, 'image-' + (i + 1) + '.jpg');
+      var baseData = new FormData(form);
+      baseData.delete('images');
+      blobBatches[0].forEach(function (blob, i) {
+        baseData.append('images', blob, 'image-' + (i + 1) + '.jpg');
       });
 
-      status.textContent = 'Saving…';
-      var res = await fetch(form.action, { method: 'POST', body: formData });
+      status.textContent = blobBatches.length > 1
+        ? 'Uploading images (1/' + blobBatches.length + ')…'
+        : 'Saving…';
+      var result = await postBatch(form.action, baseData);
+      var slug = result.slug;
 
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
+      for (var i = 1; i < blobBatches.length; i++) {
+        status.textContent = 'Uploading images (' + (i + 1) + '/' + blobBatches.length + ')…';
+        await postBatch('/admin/works/' + slug + '/images', imagesFormData(blobBatches[i]));
       }
 
-      // A non-redirect response means the server re-rendered this page
-      // with a validation error — show that instead of guessing at one.
-      var html = await res.text();
-      document.open();
-      document.write(html);
-      document.close();
+      window.location.href = '/admin';
     } catch (err) {
-      status.textContent = err.message || 'Something went wrong preparing the images.';
+      if (err && err.validationHtml) {
+        document.open();
+        document.write(err.validationHtml);
+        document.close();
+        return;
+      }
+      status.textContent = (err && err.message) ||
+        'Something went wrong. If some images already uploaded, check /admin — the work may have been saved with what succeeded so far.';
       submitBtn.disabled = false;
     }
   });

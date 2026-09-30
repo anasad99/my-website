@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
 const express = require('express');
 const cookieSession = require('cookie-session');
@@ -10,6 +9,7 @@ const multer = require('multer');
 const projects = require('./lib/projects');
 const messages = require('./lib/messages');
 const mailer = require('./lib/mailer');
+const images = require('./lib/blob-storage');
 const { WORKS_DIR } = require('./lib/storage-paths');
 
 const app = express();
@@ -28,6 +28,11 @@ if (!process.env.SESSION_SECRET) {
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// image.src is a full https:// URL for images saved to Vercel Blob, or a
+// path like "assets/works/slug/1.jpg" for the local-disk fallback — this
+// normalizes either into something usable directly in an <img src>.
+app.locals.imgSrc = (src) => (/^https?:\/\//.test(src) ? src : '/' + src);
 
 // Session data lives in the signed cookie itself (not server memory), so it
 // works across Vercel's separate serverless instances — a server-side store
@@ -58,8 +63,8 @@ function requireAdmin(req, res, next) {
 // Public pages
 // ---------------------------------------------------------------------------
 
-app.get('/', (req, res) => {
-  res.render('index', { projects: projects.readAll() });
+app.get('/', async (req, res) => {
+  res.render('index', { projects: await projects.readAll() });
 });
 
 const staticPages = { '/about': 'about.html', '/contact': 'contact.html' };
@@ -68,11 +73,11 @@ app.get(Object.keys(staticPages), (req, res) => {
   res.sendFile(path.join(__dirname, staticPages[req.path]));
 });
 
-app.get('/project/:slug', (req, res) => {
-  const project = projects.findBySlug(req.params.slug);
-  if (!project) return res.status(404).render('index', { projects: projects.readAll() });
+app.get('/project/:slug', async (req, res) => {
+  const project = await projects.findBySlug(req.params.slug);
+  if (!project) return res.status(404).render('index', { projects: await projects.readAll() });
 
-  const otherProjects = projects.readAll().filter((p) => p.slug !== project.slug);
+  const otherProjects = (await projects.readAll()).filter((p) => p.slug !== project.slug);
 
   res.render('project', {
     project,
@@ -99,7 +104,7 @@ app.post('/contact', parseForm, async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Missing required field.' });
   }
 
-  messages.add({ name, email, message });
+  await messages.add({ name, email, message });
 
   try {
     await mailer.sendContactNotification({ name, email, message });
@@ -139,16 +144,16 @@ app.post('/admin/logout', (req, res) => {
 // Admin: dashboard
 // ---------------------------------------------------------------------------
 
-app.get('/admin', requireAdmin, (req, res) => {
+app.get('/admin', requireAdmin, async (req, res) => {
   res.render('admin/dashboard', {
-    projects: projects.readAll(),
-    messages: messages.readAll(),
+    projects: await projects.readAll(),
+    messages: await messages.readAll(),
     mailConfigured: mailer.isConfigured,
     error: null
   });
 });
 
-app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), (req, res) => {
+app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), async (req, res) => {
   const name = (req.body.name || '').trim();
   const discipline = (req.body.discipline || '').trim();
   const lead = (req.body.lead || '').trim();
@@ -159,36 +164,30 @@ app.post('/admin/works', requireAdmin, uploadImages.array('images', 12), (req, r
 
   if (!name || !discipline || !lead || !req.files || req.files.length === 0) {
     return res.status(400).render('admin/dashboard', {
-      projects: projects.readAll(),
-      messages: messages.readAll(),
+      projects: await projects.readAll(),
+      messages: await messages.readAll(),
       mailConfigured: mailer.isConfigured,
       error: 'Name, discipline, lead text and at least one image are required.'
     });
   }
 
-  const slug = projects.uniqueSlug(name, projects.readAll());
-  const dir = path.join(WORKS_DIR, slug);
-  fs.mkdirSync(dir, { recursive: true });
+  const slug = projects.uniqueSlug(name, await projects.readAll());
+  const savedImages = await images.saveImages(slug, name, req.files, []);
 
-  const images = req.files.map((file, i) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    const filename = `${i + 1}${ext}`;
-    fs.writeFileSync(path.join(dir, filename), file.buffer);
-    return { src: `assets/works/${slug}/${filename}`, alt: `${name} project image` };
-  });
-
-  projects.add({ name, discipline, lead, services, images });
-  res.redirect('/admin');
+  // add() recomputes the slug the same deterministic way — it will match
+  // since nothing else touched the project list between the two calls.
+  await projects.add({ name, discipline, lead, services, images: savedImages });
+  res.json({ ok: true, slug });
 });
 
-app.get('/admin/works/:slug/edit', requireAdmin, (req, res) => {
-  const project = projects.findBySlug(req.params.slug);
+app.get('/admin/works/:slug/edit', requireAdmin, async (req, res) => {
+  const project = await projects.findBySlug(req.params.slug);
   if (!project) return res.redirect('/admin');
   res.render('admin/edit', { project, error: null });
 });
 
-app.post('/admin/works/:slug', requireAdmin, uploadImages.array('images', 12), (req, res) => {
-  const project = projects.findBySlug(req.params.slug);
+app.post('/admin/works/:slug', requireAdmin, uploadImages.array('images', 12), async (req, res) => {
+  const project = await projects.findBySlug(req.params.slug);
   if (!project) return res.redirect('/admin');
 
   const name = (req.body.name || '').trim();
@@ -200,46 +199,50 @@ app.post('/admin/works/:slug', requireAdmin, uploadImages.array('images', 12), (
     .filter(Boolean);
   const removeSrcs = [].concat(req.body.removeImages || []);
 
-  let images = project.images.filter((img) => !removeSrcs.includes(img.src));
-
-  // Only ever delete files we manage ourselves (this work's own upload
-  // folder) — never an original seed image living directly under assets/.
-  removeSrcs.forEach((src) => {
-    if (src.startsWith(`assets/works/${project.slug}/`)) {
-      fs.unlink(path.join(__dirname, src), () => {});
-    }
-  });
+  let currentImages = project.images.filter((img) => !removeSrcs.includes(img.src));
+  await Promise.all(removeSrcs.map((src) => images.deleteImage(src)));
 
   if (req.files && req.files.length) {
-    const dir = path.join(WORKS_DIR, project.slug);
-    fs.mkdirSync(dir, { recursive: true });
-    const usedNumbers = images
-      .map((img) => parseInt(path.basename(img.src), 10))
-      .filter((n) => !isNaN(n));
-    let next = usedNumbers.length ? Math.max(...usedNumbers) + 1 : 1;
-    req.files.forEach((file) => {
-      const ext = path.extname(file.originalname) || '.jpg';
-      const filename = `${next++}${ext}`;
-      fs.writeFileSync(path.join(dir, filename), file.buffer);
-      images.push({ src: `assets/works/${project.slug}/${filename}`, alt: `${name || project.name} project image` });
-    });
+    const newImages = await images.saveImages(project.slug, name || project.name, req.files, currentImages);
+    currentImages = currentImages.concat(newImages);
   }
 
-  if (!name || !discipline || !lead || images.length === 0) {
+  if (!name || !discipline || !lead || currentImages.length === 0) {
     return res.status(400).render('admin/edit', {
-      project: { ...project, name, discipline, lead, services, images },
+      project: { ...project, name, discipline, lead, services, images: currentImages },
       error: 'Name, discipline, description and at least one image are required.'
     });
   }
 
-  projects.update(project.slug, { name, discipline, lead, services, images });
-  res.redirect('/admin');
+  await projects.update(project.slug, { name, discipline, lead, services, images: currentImages });
+  res.json({ ok: true, slug: project.slug });
 });
 
-app.post('/admin/works/:slug/delete', requireAdmin, (req, res) => {
-  const removed = projects.remove(req.params.slug);
+// Appends a batch of images to an existing work without touching its other
+// fields. The admin dashboard's upload script (admin-upload.js) uses this to
+// send large image sets a few at a time — a single request carrying too many
+// compressed photos can still exceed a serverless host's payload limit even
+// after compression, so it splits the batch and calls this endpoint for
+// every batch after the first.
+app.post('/admin/works/:slug/images', requireAdmin, uploadImages.array('images', 12), async (req, res) => {
+  const project = await projects.findBySlug(req.params.slug);
+  if (!project) return res.status(404).json({ ok: false, error: 'Project not found.' });
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ ok: false, error: 'No images received.' });
+  }
+
+  const newImages = await images.saveImages(project.slug, project.name, req.files, project.images);
+  const allImages = project.images.concat(newImages);
+  await projects.update(project.slug, { images: allImages });
+
+  res.json({ ok: true, added: newImages.length });
+});
+
+app.post('/admin/works/:slug/delete', requireAdmin, async (req, res) => {
+  const removed = await projects.remove(req.params.slug);
   if (removed) {
-    fs.rm(path.join(WORKS_DIR, req.params.slug), { recursive: true, force: true }, () => {});
+    await Promise.all(removed.images.map((img) => images.deleteImage(img.src)));
+    images.deleteProjectFolder(req.params.slug);
   }
   res.redirect('/admin');
 });
@@ -248,23 +251,24 @@ app.post('/admin/works/:slug/delete', requireAdmin, (req, res) => {
 // Admin: contact messages
 // ---------------------------------------------------------------------------
 
-app.post('/admin/messages/:id/delete', requireAdmin, (req, res) => {
-  messages.remove(req.params.id);
+app.post('/admin/messages/:id/delete', requireAdmin, async (req, res) => {
+  await messages.remove(req.params.id);
   res.redirect('/admin');
 });
 
 // ---------------------------------------------------------------------------
 // Static assets (styles.css, nav.js, contact.js, assets/*) referenced by
-// absolute/relative paths in the pages above. Admin-uploaded work images live
-// in WORKS_DIR, which is outside the repo on Vercel (see lib/storage-paths),
-// so they need their own static handler ahead of the general one.
+// absolute/relative paths in the pages above. Locally (or when Blob storage
+// isn't configured), uploaded work images fall back to disk under
+// assets/works/ — this serves those. Images saved to Vercel Blob instead
+// have their own full https:// URL and never hit this route.
 // ---------------------------------------------------------------------------
 
 app.use('/assets/works', express.static(WORKS_DIR));
 app.use(express.static(__dirname, { index: false }));
 
-app.use((req, res) => {
-  res.status(404).render('index', { projects: projects.readAll() });
+app.use(async (req, res) => {
+  res.status(404).render('index', { projects: await projects.readAll() });
 });
 
 // Vercel imports this file as a serverless function and calls the exported

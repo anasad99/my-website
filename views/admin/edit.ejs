@@ -122,7 +122,7 @@
         <ul class="current-images">
           <% project.images.forEach(function (image, i) { %>
           <li>
-            <img src="/<%= image.src %>" alt="">
+            <img src="<%= imgSrc(image.src) %>" alt="">
             <label><input type="checkbox" name="removeImages" value="<%= image.src %>"> Remove</label>
           </li>
           <% }) %>

@@ -40,11 +40,11 @@
   <section class="case-media section" aria-label="Project imagery">
     <% layout.forEach(function (group) { %>
       <% if (group.type === 'wide') { %>
-        <img class="media-wide" src="/<%= group.images[0].src %>" alt="<%= group.images[0].alt %>" width="1250" height="590">
+        <img class="media-wide" src="<%= imgSrc(group.images[0].src) %>" alt="<%= group.images[0].alt %>" width="1250" height="590">
       <% } else { %>
         <div class="media-pair">
-          <img src="/<%= group.images[0].src %>" alt="<%= group.images[0].alt %>" width="618" height="590">
-          <img src="/<%= group.images[1].src %>" alt="<%= group.images[1].alt %>" width="618" height="590">
+          <img src="<%= imgSrc(group.images[0].src) %>" alt="<%= group.images[0].alt %>" width="618" height="590">
+          <img src="<%= imgSrc(group.images[1].src) %>" alt="<%= group.images[1].alt %>" width="618" height="590">
         </div>
       <% } %>
     <% }) %>
@@ -68,7 +68,7 @@
     <ul class="others__grid" id="others-grid">
       <% otherProjects.forEach(function (other) { %>
       <li class="others__card">
-        <a href="/project/<%= other.slug %>"><img src="/<%= other.images[0].src %>" alt="<%= other.images[0].alt %>" width="407" height="407"></a>
+        <a href="/project/<%= other.slug %>"><img src="<%= imgSrc(other.images[0].src) %>" alt="<%= other.images[0].alt %>" width="407" height="407"></a>
         <a class="text-link" href="/project/<%= other.slug %>">See Project <span aria-hidden="true">&rarr;</span></a>
       </li>
       <% }) %>
