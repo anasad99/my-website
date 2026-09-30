@@ -27,11 +27,20 @@ fix this, both set up from the Vercel dashboard's **Storage** tab:
    uploaded work images live. Free tier covers a personal portfolio's worth
    of images comfortably.
 
-Connecting either through the dashboard auto-injects the right environment
-variables (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, `BLOB_READ_WRITE_TOKEN`) —
-no need to set them manually unless you also want to test against the same
-live database from your local `.env` (see `.env.example` for where to put
-them).
+Connecting either through the dashboard auto-injects what's needed:
+`KV_REST_API_URL` / `KV_REST_API_TOKEN` for Redis, and `BLOB_STORE_ID` +
+a short-lived `VERCEL_OIDC_TOKEN` for Blob — Blob authenticates via OIDC by
+default now, so there's no static Blob token to find or copy anywhere.
+Nothing to set manually **unless** you also want to test against the same
+live database from your local `.env` — for Redis, copy the two REST values
+from the Upstash dashboard; for Blob, run `vercel env pull` instead of
+copying a token by hand (OIDC tokens are short-lived and the Vercel CLI
+refreshes them for you). See `.env.example` for where these go.
+
+**Important:** connecting a store to the project does not update a
+deployment that's already running — after connecting either one, trigger a
+fresh deploy (Deployments tab → "⋯" on the latest → Redeploy) so the
+function actually picks up the new environment variables.
 
 **Without these connected**, the site still works for browsing — it just
 falls back to the same non-persistent local-file behavior described above,
